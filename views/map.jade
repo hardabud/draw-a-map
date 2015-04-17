@@ -1,34 +1,7 @@
 html
 	head
 		meta(charset="UTF-8")
-		script(src="/lib/zepto.js")
-		link(rel="stylesheet" href="/lib/leaflet/leaflet.css")
-		script(src="/lib/leaflet/leaflet.js")
+		link(rel="stylesheet" href="/css/leaflet.css")
+		link(rel="stylesheet" href="/css/mapPage.css")
 	body
-		div(id="content")
-			div(id="menu")
-			div(id="map")
-		script.
-			console.log(document)
-			$('body').css({
-				width: document.innerWidth,
-				height: document.innerHeight
-			})
-			$('#content').css({
-				width: window.innerWidth,
-				height: window.innerHeight
-			})
-			$('#menu').css({
-				float: 'left',
-				width: window.innerWidth * 0.2,
-				height: window.innerHeight
-			})
-			$('#map').css({
-				float: 'left',
-				width: window.innerWidth * 0.8,
-				height: window.innerHeight
-			})
-			var map = L.map('map');
-			var collection =!{JSON.stringify(geojson)};
-			var coll = L.geoJson(collection).addTo(map);
-			//map.fitBounds(group.getBounds());
+		script(src="/js/bundleMap.js")

@@ -1,16 +1,20 @@
 var express = require('express');
 var app = express();
-
-app.set('views', './views');
-app.set('view engine', 'jade');
-app.use('/js', express.static(__dirname + '/public/js'));
-app.use('/lib', express.static(__dirname + '/public/lib'));
-app.use('/css', express.static(__dirname + '/public/css'));
-
 var jf = require('jsonfile')
+var bodyParser = require('body-parser');
 
 var tmpl = require('./templates');
 var account = require('./account');
+
+app.set('views', './views');
+app.set('view engine', 'jade');
+app.use(bodyParser.urlencoded({ extended: true }))
+app.use(bodyParser.json());
+app.use('/js', express.static(__dirname + '/public/js'));
+app.use('/img', express.static(__dirname + '/public/img'));
+app.use('/css', express.static(__dirname + '/public/css'));
+
+
 
 app.get('/', function(req, res) {
 	res.render('index')
@@ -19,26 +23,43 @@ app.get('/', function(req, res) {
 app.get('/new' , function(req, res) {
 	var id = account.createId();
 	jf.writeFileSync('data/' + id + '.json', tmpl.collection());
-	res.redirect('/id/' + id);
+	res.redirect('/' + id);
 })
 
-app.get('/id/:id', function(req, res) {
+app.get('/:id', function(req, res) {
 	var id = req.params.id;
-	var geojson = jf.readFileSync('data/' + id + '.json');
-	res.render('map', {geojson: geojson});
+	res.render('map', { id: id });
 })
 
-app.post('/id/:id/add', function(req, res) {
+app.get('/api/get/:id', function(req, res) {
 	var id = req.params.id;
 	var geojson = jf.readFileSync('data/' + id + '.json');
-	var feature = req.body;
+	res.send(geojson);
+})
+
+app.post('/api/add/:id', function(req, res) {
+	var id = req.params.id;
+	var geojson = jf.readFileSync('data/' + id + '.json');
+	var feature = req.body; 
+	console.log(feature.geometry.coordinates)
+	if(feature.geometry.type == 'LineString') { 
+		var old = feature.geometry.coordinates;
+		var coords = [];
+		for(i=0;i<old.length;i++) {
+			var lat = +old[i][0]; console.log(lat)
+			var lng = +old[i][1];
+			coords.push([lat, lng]);
+		}	
+		console.log(coords)
+		feature.geometry.coordinates = coords;
+	}
 	feature.properties.id = geojson.features.length + 1;
 	geojson.features.push(feature);
 	jf.writeFileSync('data/' + id + '.json', geojson);
 	res.send(geojson)
 })
 
-app.post('/id/:id/rm/:featureId', function(req, res) {
+app.post('/api/rm/:id/:featureId', function(req, res) {
 	var id = req.params.id;
 	var featureId = +req.params.featureId;
 	var geojson = jf.readFileSync('data/' + id + '.json');

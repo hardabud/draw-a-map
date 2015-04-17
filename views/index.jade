@@ -1,7 +1,7 @@
 html
 	head
 		meta(charset="UTF-8")
-		script(src="/lib/zepto.js")
+		script(src="/js/bundleIndex.js")
 	body
 		h1 reopen drawing
 		input(id="id" type="number" required)
@@ -9,9 +9,4 @@ html
 		h1 start new drawing
 		a(href="/new")
 			button OK
-		script.
-			$('#open').on('click', function(e) {
-				e.preventDefault();
-				var id = $('#id').val();
-				window.location = '/id/' + id;
-			})
+

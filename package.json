@@ -10,7 +10,9 @@
   "author": "",
   "license": "BSD",
   "dependencies": {
-    "jsonfile": "~2.0.0",
-    "jade": "~1.9.2"
+    "body-parser": "^1.12.3",
+    "express": "^4.12.3",
+    "jade": "~1.9.2",
+    "jsonfile": "~2.0.0"
   }
 }
