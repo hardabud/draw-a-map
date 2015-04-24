@@ -1,14 +1,11 @@
 var $ = require('jquery');
-
+var mapCtrl = require('./mapCtrl.js');
 
 exports.init = init;
 
 function init() {
-
-	$('svg.leaflet-zoom-animated').empty();
-	$('.leaflet-shadow-pane').empty();
-	$('.leaflet-marker-pane').empty();
-	$('.leaflet-popup-pane').empty();
+	
+	mapCtrl.init();
 
 	var menu = $('#menu');
 	window.mode = 'idle';
@@ -21,19 +18,6 @@ function init() {
 	$('#drawPoint').on('click', function() { drawPoint(menu) })
 	$('#drawLine').on('click', function() { drawLine(menu) })
 	$('#drawPolygon').on('click', function() { mode = 'drawPolygon'; })
-
-	$.getJSON('/api/get/' + id, function(json) { console.log(json)
-		if(json.features.length != 0) {
-			for(i=0;i<json.features.length;i++) {
-				if(json.features[i].geometry.type == 'Point') {
-					L.marker(json.features[i].geometry.coordinates).addTo(map);				
-				} else if(json.features[i].geometry.type == 'LineString') {
-					L.polyline(json.features[i].geometry.coordinates).addTo(map);
-				}
-			}
-		}
-	})
-
 }
 
 function drawPoint(menu) {
@@ -48,7 +32,11 @@ function drawLine(menu) {
 	menu.append('<h2>Add a line to the map</h2>')
 }
 
-
+function drawPolygon(menu) {
+	mode = 'drawPolygon';
+	menu.empty();
+	menu.append('<h2>Add a polygon to the map</h2>')
+}
 
 exports.drawingPoint = function(coord) {
 	var menu = $('#menu');
@@ -57,14 +45,14 @@ exports.drawingPoint = function(coord) {
 	menu.append('<input id="name" type="text" placeholder="name" required>')
 	menu.append('<button id="yes">Yes</button>');
 	menu.append('<button id="no">No</button>');
-	$('button#no').on('click', function() { init(); })
+	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
 		if($('#name').val() == '') {
 			menu.append('<p>Give this point a name</p>')
 		} else {
 			var date = Date.now();
 			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'Point', coordinates: coord}, properties: {created: date}}, 
-				function(resp) { init(); }
+				function(resp) { map.remove(); init(); }
 			);
 		}
 	})
@@ -77,18 +65,36 @@ exports.drawingLine = function(coord) {
 	menu.append('<input id="name" type="text" placeholder="name" required>')
 	menu.append('<button id="yes">Yes</button>');
 	menu.append('<button id="no">No</button>');
-	$('button#no').on('click', function() { init(); })
+	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
 		if($('#name').val() == '') {
 			menu.append('<p>Give this line a name</p>')
 		} else {
 			var date = Date.now();
 			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'LineString', coordinates: coord}, properties: {created: date}}, 
-				function(resp) { 
-					pts = [];
-					init(); 
-				}
+				function(resp) { map.remove(); init(); }
 			);
 		}
 	})
 }
+
+exports.drawingPolygon = function(coord) {
+	var menu = $('#menu');
+	menu.empty();
+	menu.append('<h2>Save this polygon?</h2>');
+	menu.append('<input id="name" type="text" placeholder="name" required>')
+	menu.append('<button id="yes">Yes</button>');
+	menu.append('<button id="no">No</button>');
+	$('button#no').on('click', function() { map.remove(); init(); })
+	$('button#yes').on('click', function() {
+		if($('#name').val() == '') {
+			menu.append('<p>Give this polygon a name</p>')
+		} else {
+			var date = Date.now();
+			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'Polygon', coordinates: coord}, properties: {created: date}}, 
+				function(resp) { map.remove(); init(); }
+			);
+		}
+	})
+}
+

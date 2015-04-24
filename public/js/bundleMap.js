@@ -6,22 +6,20 @@ L.Icon.Default.imagePath = 'img';
 
 var mapGrid = require('./mapPage/grid.js');
 var menuCtrl = require('./mapPage/menuCtrl.js');
-var mapCtrl = require('./mapPage/mapCtrl.js');
 
 window.mode = 'idle';
 window.id = window.location.pathname.substring(1,window.location.length);
-window.pts = [];
+window.cur = {};
+
 var body = $('body');
 mapGrid(body);
 
 menuCtrl.init();
 
-window.map = L.map('map').setView([0, 0], 10);
-mapCtrl(map);
 
 
 
-},{"./mapPage/grid.js":2,"./mapPage/mapCtrl.js":3,"./mapPage/menuCtrl.js":4,"jquery":5,"leaflet":6}],2:[function(require,module,exports){
+},{"./mapPage/grid.js":2,"./mapPage/menuCtrl.js":4,"jquery":5,"leaflet":6}],2:[function(require,module,exports){
 var $ = require('jquery');
 
 module.exports = function(body) { 
@@ -59,44 +57,86 @@ module.exports = function(body) {
 var L = require('leaflet');
 var $ = require('jquery');
 
+
 var menuCtrl = require('./menuCtrl.js');
 
-module.exports = function() {
-	map.on('click', function(e) {
-		if(mode == 'drawPoint') { drawPoint(e); }
-		else if(mode == 'drawLine') { drawLine(e); }
+exports.init = function() {
+	window.map = L.map('map');
+	window.pts = [];
+	window.mode = 'idle';
+
+	$.getJSON('/api/get/' + id, function(json) {
+		var geojson = L.geoJson(json).addTo(map);
+		if(json.features.length == 0) { map.setView([0, 0], 10); }
+		else if(json.features.length == 1 && json.features[0].geometry.type == 'Point') { 
+			map.setView(geojson.getBounds()._southWest, 10) 
+		} else { 
+			map.fitBounds(geojson.getBounds()) 
+		}
 	});
+
+	map.on('click', function(e) { mapClick(e) })
+}
+
+function mapClick(e) {
+	if(mode == 'drawPoint') { drawPoint(e) }
+	if(mode == 'drawLine') { drawLine(e) }
+	if(mode == 'drawPolygon') { drawPolygon(e) }
 }
 
 function drawPoint(e) {
-	L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+	L.marker(e.latlng).addTo(map)
 	window.mode = 'idle';
-	menuCtrl.drawingPoint([e.latlng.lat, e.latlng.lng]);
+
+	menuCtrl.drawingPoint([e.latlng.lng, e.latlng.lat]);
 }
 
 function drawLine(e) {
+	$('path#draw').remove();
 	var newPt = [+e.latlng.lat, +e.latlng.lng];
 	pts.push(newPt);
 	if(pts.length == 1) {
-		L.circle(pts[0], 100).addTo(map)
+		var draw = L.circle(pts[0], 1).addTo(map);
 	} else {
-		L.polyline(pts).addTo(map);
-		menuCtrl.drawingLine(pts);
-	} 
+		var draw = L.polyline(pts).addTo(map);
+		var coord = [];
+		for(i=0;i<pts.length;i++) {
+			coord.push([pts[i][1], pts[i][0]])
+		}
+		menuCtrl.drawingLine(coord)
+	}
+	draw._path.id = 'draw';
 }
+
+function drawPolygon(e) {
+	$('path#draw').remove();
+	var newPt = [+e.latlng.lat, +e.latlng.lng];
+	pts.push(newPt);
+	if(pts.length == 1) {
+		L.circle(pts[0], 1).addTo(map)._path.id = 'draw';
+	} else if(pts.length == 2) {
+		L.polyline(pts).addTo(map)._path.id = 'draw';
+	} else {
+		L.polygon([pts]).addTo(map)._path.id = 'draw';
+		var coord = [[]];
+		for(i=0;i<pts.length;i++) {
+			coord[0].push([pts[i][1], pts[i][0]])
+		}
+		console.log(coord)
+		menuCtrl.drawingPolygon(coord);
+	}
+}
+
 
 },{"./menuCtrl.js":4,"jquery":5,"leaflet":6}],4:[function(require,module,exports){
 var $ = require('jquery');
-
+var mapCtrl = require('./mapCtrl.js');
 
 exports.init = init;
 
 function init() {
-
-	$('svg.leaflet-zoom-animated').empty();
-	$('.leaflet-shadow-pane').empty();
-	$('.leaflet-marker-pane').empty();
-	$('.leaflet-popup-pane').empty();
+	
+	mapCtrl.init();
 
 	var menu = $('#menu');
 	window.mode = 'idle';
@@ -109,19 +149,6 @@ function init() {
 	$('#drawPoint').on('click', function() { drawPoint(menu) })
 	$('#drawLine').on('click', function() { drawLine(menu) })
 	$('#drawPolygon').on('click', function() { mode = 'drawPolygon'; })
-
-	$.getJSON('/api/get/' + id, function(json) { console.log(json)
-		if(json.features.length != 0) {
-			for(i=0;i<json.features.length;i++) {
-				if(json.features[i].geometry.type == 'Point') {
-					L.marker(json.features[i].geometry.coordinates).addTo(map);				
-				} else if(json.features[i].geometry.type == 'LineString') {
-					L.polyline(json.features[i].geometry.coordinates).addTo(map);
-				}
-			}
-		}
-	})
-
 }
 
 function drawPoint(menu) {
@@ -136,7 +163,11 @@ function drawLine(menu) {
 	menu.append('<h2>Add a line to the map</h2>')
 }
 
-
+function drawPolygon(menu) {
+	mode = 'drawPolygon';
+	menu.empty();
+	menu.append('<h2>Add a polygon to the map</h2>')
+}
 
 exports.drawingPoint = function(coord) {
 	var menu = $('#menu');
@@ -145,14 +176,14 @@ exports.drawingPoint = function(coord) {
 	menu.append('<input id="name" type="text" placeholder="name" required>')
 	menu.append('<button id="yes">Yes</button>');
 	menu.append('<button id="no">No</button>');
-	$('button#no').on('click', function() { init(); })
+	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
 		if($('#name').val() == '') {
 			menu.append('<p>Give this point a name</p>')
 		} else {
 			var date = Date.now();
 			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'Point', coordinates: coord}, properties: {created: date}}, 
-				function(resp) { init(); }
+				function(resp) { map.remove(); init(); }
 			);
 		}
 	})
@@ -165,23 +196,41 @@ exports.drawingLine = function(coord) {
 	menu.append('<input id="name" type="text" placeholder="name" required>')
 	menu.append('<button id="yes">Yes</button>');
 	menu.append('<button id="no">No</button>');
-	$('button#no').on('click', function() { init(); })
+	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
 		if($('#name').val() == '') {
 			menu.append('<p>Give this line a name</p>')
 		} else {
 			var date = Date.now();
 			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'LineString', coordinates: coord}, properties: {created: date}}, 
-				function(resp) { 
-					pts = [];
-					init(); 
-				}
+				function(resp) { map.remove(); init(); }
 			);
 		}
 	})
 }
 
-},{"jquery":5}],5:[function(require,module,exports){
+exports.drawingPolygon = function(coord) {
+	var menu = $('#menu');
+	menu.empty();
+	menu.append('<h2>Save this polygon?</h2>');
+	menu.append('<input id="name" type="text" placeholder="name" required>')
+	menu.append('<button id="yes">Yes</button>');
+	menu.append('<button id="no">No</button>');
+	$('button#no').on('click', function() { map.remove(); init(); })
+	$('button#yes').on('click', function() {
+		if($('#name').val() == '') {
+			menu.append('<p>Give this polygon a name</p>')
+		} else {
+			var date = Date.now();
+			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'Polygon', coordinates: coord}, properties: {created: date}}, 
+				function(resp) { map.remove(); init(); }
+			);
+		}
+	})
+}
+
+
+},{"./mapCtrl.js":3,"jquery":5}],5:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.3
  * http://jquery.com/
