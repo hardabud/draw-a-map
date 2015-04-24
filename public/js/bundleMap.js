@@ -182,9 +182,17 @@ exports.drawingPoint = function(coord) {
 			menu.append('<p>Give this point a name</p>')
 		} else {
 			var date = Date.now();
-			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'Point', coordinates: coord}, properties: {created: date}}, 
-				function(resp) { map.remove(); init(); }
-			);
+			$.post('/api/add/' + id, {
+				type: 'Feature', 
+				geometry: { 
+					type: 'Point', 
+					coordinates: coord
+				}, 
+				properties: {
+					created: date,
+					name: $('#name').val()
+				}
+			}, function(resp) { map.remove(); init(); });
 		}
 	})
 }
@@ -202,9 +210,17 @@ exports.drawingLine = function(coord) {
 			menu.append('<p>Give this line a name</p>')
 		} else {
 			var date = Date.now();
-			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'LineString', coordinates: coord}, properties: {created: date}}, 
-				function(resp) { map.remove(); init(); }
-			);
+			$.post('/api/add/' + id, {
+				type: 'Feature', 
+				geometry: { 
+					type: 'LineString', 
+					coordinates: coord
+				}, 
+				properties: {
+					created: date,
+					name: $('#name').val()
+				}
+			}, function(resp) { map.remove(); init(); });
 		}
 	})
 }
@@ -222,9 +238,16 @@ exports.drawingPolygon = function(coord) {
 			menu.append('<p>Give this polygon a name</p>')
 		} else {
 			var date = Date.now();
-			$.post('/api/add/' + id, {type: 'Feature', geometry: { type: 'Polygon', coordinates: coord}, properties: {created: date}}, 
-				function(resp) { map.remove(); init(); }
-			);
+			$.post('/api/add/' + id, {
+				type: 'Feature', 
+				geometry: { 
+					type: 'Polygon', 
+					coordinates: coord}, 
+				properties: {
+					created: date,
+					name: $('#name').val()
+				}
+			}, function(resp) { map.remove(); init(); });
 		}
 	})
 }
