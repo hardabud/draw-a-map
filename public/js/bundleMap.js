@@ -8,7 +8,6 @@ var mapGrid = require('./mapPage/grid.js');
 var menuCtrl = require('./mapPage/menuCtrl.js');
 
 window.mode = 'idle';
-//window.lang = window.location.pathname.substring(1,3); console.log('lang: ' + lang)
 window.id = window.location.pathname.substring(3,window.location.length);
 window.cur = {};
 
@@ -107,10 +106,14 @@ exports.init = function() {
 	window.pts = [];
 	window.mode = 'idle';
 
+	L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+		attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+	}).addTo(map);
+
 	$.getJSON('/api/get/' + id, function(json) {
 
 		var geojson = L.geoJson(json);
-		if(json.features.length == 0) { map.setView([0, 0], 10); }
+		if(json.features.length == 0) { map.setView([46.198, 6.142], 4); }
 		else if(json.features.length == 1 && json.features[0].geometry.type == 'Point') { 
 			map.setView(geojson.getBounds()._southWest, 10) 
 		} else { 
