@@ -8,7 +8,8 @@ var mapGrid = require('./mapPage/grid.js');
 var menuCtrl = require('./mapPage/menuCtrl.js');
 
 window.mode = 'idle';
-window.id = window.location.pathname.substring(1,window.location.length);
+//window.lang = window.location.pathname.substring(1,3); console.log('lang: ' + lang)
+window.id = window.location.pathname.substring(3,window.location.length);
 window.cur = {};
 
 var body = $('body');
@@ -19,7 +20,7 @@ menuCtrl.init();
 
 
 
-},{"./mapPage/grid.js":3,"./mapPage/menuCtrl.js":5,"jquery":7,"leaflet":8}],2:[function(require,module,exports){
+},{"./mapPage/grid.js":3,"./mapPage/menuCtrl.js":5,"jquery":9,"leaflet":10}],2:[function(require,module,exports){
 var icon = L.Icon.extend({
 	options: {
 		shadowUrl: 'img/icons/shadow.png',
@@ -37,10 +38,6 @@ exports.redIcon = new icon({iconUrl: 'img/icons/red.png'});
 exports.orangeIcon = new icon({iconUrl: 'img/icons/orange.png'});
 exports.purpleIcon = new icon({iconUrl: 'img/icons/purple.png'});
 exports.grayIcon = new icon({iconUrl: 'img/icons/gray.png'});
-
-exports.colorOptions = function() {
-	return ['Blue', 'Green', 'Red', 'Orange', 'Purple', 'Gray']
-}
 
 exports.pointStyle = function(color) {
 	if(color == 'Blue') { return { icon: 'blueIcon' } }
@@ -97,7 +94,7 @@ module.exports = function(body) {
 }
 
 
-},{"jquery":7}],4:[function(require,module,exports){
+},{"jquery":9}],4:[function(require,module,exports){
 var L = require('leaflet');
 var $ = require('jquery');
 
@@ -196,11 +193,16 @@ function drawPolygon(e) {
 }
 
 
-},{"./featureStyle.js":2,"./menuCtrl.js":5,"./renderGeojson.js":6,"jquery":7,"leaflet":8}],5:[function(require,module,exports){
+},{"./featureStyle.js":2,"./menuCtrl.js":5,"./renderGeojson.js":6,"jquery":9,"leaflet":10}],5:[function(require,module,exports){
 var $ = require('jquery');
 
 var mapCtrl = require('./mapCtrl.js');
 var featureStyle = require('./featureStyle.js');
+var txtFr = require('./txtFr.js');
+var txtEn = require('./txtEn.js');
+var lang = window.location.pathname.substring(1,3);
+console.log(lang)
+if(lang == 'fr') { var txt = txtFr; console.log('en francais')} else { var txt = txtEn; }
 
 exports.init = init;
 
@@ -211,10 +213,10 @@ function init() {
 	var menu = $('#menu');
 	window.mode = 'idle';
 	menu.empty();
-	menu.append('<h2>Draw</h2>')
-	menu.append('<button id="drawPoint">a point</button>')
-	menu.append('<button id="drawLine">a line</button>')
-	menu.append('<button id="drawPolygon">a polygon</button>')
+	menu.append('<h2>' + txt.draw() + '</h2>')
+	menu.append('<button id="drawPoint">' + txt.aPoint() + '</button>')
+	menu.append('<button id="drawLine">' + txt.aLine() + '</button>')
+	menu.append('<button id="drawPolygon">' + txt.aPolygon() + '</button>')
 
 	$('#drawPoint').on('click', function() { drawPoint(menu) })
 	$('#drawLine').on('click', function() { drawLine(menu) })
@@ -224,36 +226,36 @@ function init() {
 function drawPoint(menu) {
 	mode = 'drawPoint';
 	menu.empty();
-	menu.append('<h2>Add a point to the map</h2>')
+	menu.append('<h2>' + txt.addAPoint() + '</h2>')
 }
 
 function drawLine(menu) {
 	mode = 'drawLine';
 	menu.empty();
-	menu.append('<h2>Add a line to the map</h2>')
+	menu.append('<h2>' + txt.addALine() + '</h2>')
 }
 
 function drawPolygon(menu) {
 	mode = 'drawPolygon';
 	menu.empty();
-	menu.append('<h2>Add a polygon to the map</h2>')
+	menu.append('<h2>' + txt.addAPolygon() + '</h2>')
 }
 
 exports.drawingPoint = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<p>Name this point</p>');
-	menu.append('<input id="name" type="text" placeholder="name" required>');
-	menu.append('<p>Choose icon color</p>');	
+	menu.append('<p>' + txt.name() + '</p>');
+	menu.append('<input id="name" type="text" placeholder="' + txt.name() + '" required>');
+	menu.append('<p>' + txt.iconColor() + '</p>');	
 	menu.append('<select id="color">');
 	var select = $('#color')
-	var colors = featureStyle.colorOptions();
+	var colors = txt.colorOptions();
 	for(i=0;i<colors.length;i++) {
-		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
+		select.append('<option value="' + colors[i].id + '">' + colors[i].name + '</option>')
 	}
 	menu.append('<br><br>');
-	menu.append('<button id="yes">Save</button>');
-	menu.append('<button id="no">Cancel</button>');
+	menu.append('<button id="yes">' + txt.save() + '</button>');
+	menu.append('<button id="no">' + txt.cancel() + '</button>');
 
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
@@ -276,20 +278,20 @@ exports.drawingPoint = function(coord) {
 exports.drawingLine = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<p>Name this line</p>')
-	menu.append('<input id="name" type="text" placeholder="name" required>');
-	menu.append('<p>Choose color</p>');
+	menu.append('<p>' + txt.name() + '</p>')
+	menu.append('<input id="name" type="text" placeholder="' + txt.name() + '" required>');
+	menu.append('<p>' + txt.color() + '</p>');
 	menu.append('<select id="color">');
 	var select = $('#color');
-	var colors = featureStyle.colorOptions();
+	var colors = txt.colorOptions();
 	for(i=0;i<colors.length;i++) {
-		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
+		select.append('<option value="' + colors[i].id + '">' + colors[i].name + '</option>')
 	}
-	menu.append('<p>Choose line opacity</p>');
+	menu.append('<p>' + txt.opacity() + '</p>');
 	menu.append('<input type="range" id="opacity" value="50">');
 	menu.append('<br><br>');
-	menu.append('<button id="yes">Save</button>');
-	menu.append('<button id="no">Cancel</button>');
+	menu.append('<button id="yes">' + txt.save() + '</button>');
+	menu.append('<button id="no">' + txt.cancel() + '</button>');
 
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
@@ -315,25 +317,25 @@ exports.drawingLine = function(coord) {
 exports.drawingPolygon = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<p>Name this polygon</p>')
-	menu.append('<input id="name" type="text" placeholder="name" required>')
-	menu.append('<p>Border color</p>');
+	menu.append('<p>' + txt.name() + '</p>')
+	menu.append('<input id="name" type="text" placeholder="' + txt.name() + '" required>')
+	menu.append('<p>' + txt.borderColor() + '</p>');
 	menu.append('<select id="bordercolor">');
-	menu.append('<p>Border opacity</p>');
+	menu.append('<p>' + txt.borderOpacity() + '</p>');
 	menu.append('<input type="range" id="borderopacity" value="50">');
-	menu.append('<p>Fill color</p>');
+	menu.append('<p>' + txt.fillColor() + '</p>');
 	menu.append('<select id="fillcolor">');
-	menu.append('<p>Fill opacity</p>');
+	menu.append('<p>' + txt.fillOpacity() + '</p>');
 	menu.append('<input type="range" id="fillopacity" value="20">');
 	menu.append('<br><br>');
-	menu.append('<button id="yes">Save</button>');
-	menu.append('<button id="no">Cancel</button>');
+	menu.append('<button id="yes">' + txt.save() + '</button>');
+	menu.append('<button id="no">' + txt.cancel() + '</button>');
 	var selectBorder = $('#bordercolor');
 	var selectFill = $('#fillcolor');
-	var colors = featureStyle.colorOptions();
+	var colors = txt.colorOptions();
 	for(i=0;i<colors.length;i++) {
-		selectBorder.append('<option value="' + colors[i] + '">' + colors[i] + '</option>');
-		selectFill.append('<option value="' + colors[i] + '">' + colors[i] + '</option>');
+		selectBorder.append('<option value="' + colors[i].id + '">' + colors[i].name + '</option>');
+		selectFill.append('<option value="' + colors[i].id + '">' + colors[i].name + '</option>');
 	}
 
 	$('button#no').on('click', function() { map.remove(); init(); })
@@ -359,7 +361,7 @@ exports.drawingPolygon = function(coord) {
 }
 
 
-},{"./featureStyle.js":2,"./mapCtrl.js":4,"jquery":7}],6:[function(require,module,exports){
+},{"./featureStyle.js":2,"./mapCtrl.js":4,"./txtEn.js":7,"./txtFr.js":8,"jquery":9}],6:[function(require,module,exports){
 var featureStyle = require('./featureStyle.js');
 
 exports.point = function(feature) {
@@ -436,6 +438,66 @@ exports.polygon = function(feature) {
 }
 
 },{"./featureStyle.js":2}],7:[function(require,module,exports){
+exports.draw = function() { return 'Draw' }
+exports.aPoint = function() { return 'a point' }
+exports.aLine = function() { return 'a line' }
+exports.aPolygon = function() { return 'a polygon' }
+exports.addAPoint = function() { return 'Add a point to the map' }
+exports.addALine = function() { return 'Add a line to the map' }
+exports.addAPolyon = function() { return 'Add a polygon to the map' }
+exports.name = function() { return 'Name' }
+exports.iconColor = function() { return 'Icon color' }
+exports.save = function() { return 'Save' }
+exports.cancel = function() { return 'Cancel' }
+exports.color = function() { return 'Color' }
+exports.opacity = function() { return 'Opacity' }
+exports.borderColor = function() { return 'Border color' }
+exports.borderOpacity = function() { return 'Border opacity' }
+exports.fillColor = function() { return 'Fill color' }
+exports.fillOpacity = function() { return 'Fill opacity' }
+exports.colorOptions = function() {
+	return [
+		{ name: 'Blue', id: 'Blue'},
+		{ name: 'Green', id: 'Green'},
+		{ name: 'Red', id: 'Red'},
+		{ name: 'Orange', id: 'Orange'},
+		{ name: 'Purple', id: 'Purple'},
+		{ name: 'Gray', id: 'Gray'}
+	]
+}
+
+
+},{}],8:[function(require,module,exports){
+exports.draw = function() { return 'Dessinez' }
+exports.aPoint = function() { return 'un point' }
+exports.aLine = function() { return 'une ligne' }
+exports.aPolygon = function() { return 'un polygone' }
+exports.addAPoint = function() { return 'Dessinez un point' }
+exports.addALine = function() { return 'Dessinez une ligne' }
+exports.addAPolyon = function() { return 'Dessinez un polygone' }
+exports.name = function() { return 'Nom' }
+exports.iconColor = function() { return 'Couleur de l&#39;icône' }
+exports.save = function() { return 'Sauver' }
+exports.cancel = function() { return 'Annuler' }
+exports.color = function() { return 'Couleur' }
+exports.opacity = function() { return 'Opacité' }
+exports.borderColor = function() { return 'Couleur de bordure' }
+exports.borderOpacity = function() { return 'Opacité de bordure' }
+exports.fillColor = function() { return 'Couleur' }
+exports.fillOpacity = function() { return 'Opacité' }
+exports.colorOptions = function() {
+	return [
+		{ name: 'Bleu', id: 'Blue'},
+		{ name: 'Vert', id: 'Green'},
+		{ name: 'Rouge', id: 'Red'},
+		{ name: 'Orange', id: 'Orange'},
+		{ name: 'Violet', id: 'Purple'},
+		{ name: 'Gris', id: 'Gray'}
+	]
+}
+
+
+},{}],9:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.3
  * http://jquery.com/
@@ -9642,7 +9704,7 @@ return jQuery;
 
 }));
 
-},{}],8:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /*
  Leaflet, a JavaScript library for mobile-friendly interactive maps. http://leafletjs.com
  (c) 2010-2013, Vladimir Agafonkin

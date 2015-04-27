@@ -16,10 +16,6 @@ exports.orangeIcon = new icon({iconUrl: 'img/icons/orange.png'});
 exports.purpleIcon = new icon({iconUrl: 'img/icons/purple.png'});
 exports.grayIcon = new icon({iconUrl: 'img/icons/gray.png'});
 
-exports.colorOptions = function() {
-	return ['Blue', 'Green', 'Red', 'Orange', 'Purple', 'Gray']
-}
-
 exports.pointStyle = function(color) {
 	if(color == 'Blue') { return { icon: 'blueIcon' } }
 	else if(color == 'Green') { return { icon: 'greenIcon' } }

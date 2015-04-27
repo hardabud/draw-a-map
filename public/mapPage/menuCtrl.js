@@ -2,6 +2,11 @@ var $ = require('jquery');
 
 var mapCtrl = require('./mapCtrl.js');
 var featureStyle = require('./featureStyle.js');
+var txtFr = require('./txtFr.js');
+var txtEn = require('./txtEn.js');
+var lang = window.location.pathname.substring(1,3);
+console.log(lang)
+if(lang == 'fr') { var txt = txtFr; console.log('en francais')} else { var txt = txtEn; }
 
 exports.init = init;
 
@@ -12,10 +17,10 @@ function init() {
 	var menu = $('#menu');
 	window.mode = 'idle';
 	menu.empty();
-	menu.append('<h2>Draw</h2>')
-	menu.append('<button id="drawPoint">a point</button>')
-	menu.append('<button id="drawLine">a line</button>')
-	menu.append('<button id="drawPolygon">a polygon</button>')
+	menu.append('<h2>' + txt.draw() + '</h2>')
+	menu.append('<button id="drawPoint">' + txt.aPoint() + '</button>')
+	menu.append('<button id="drawLine">' + txt.aLine() + '</button>')
+	menu.append('<button id="drawPolygon">' + txt.aPolygon() + '</button>')
 
 	$('#drawPoint').on('click', function() { drawPoint(menu) })
 	$('#drawLine').on('click', function() { drawLine(menu) })
@@ -25,36 +30,36 @@ function init() {
 function drawPoint(menu) {
 	mode = 'drawPoint';
 	menu.empty();
-	menu.append('<h2>Add a point to the map</h2>')
+	menu.append('<h2>' + txt.addAPoint() + '</h2>')
 }
 
 function drawLine(menu) {
 	mode = 'drawLine';
 	menu.empty();
-	menu.append('<h2>Add a line to the map</h2>')
+	menu.append('<h2>' + txt.addALine() + '</h2>')
 }
 
 function drawPolygon(menu) {
 	mode = 'drawPolygon';
 	menu.empty();
-	menu.append('<h2>Add a polygon to the map</h2>')
+	menu.append('<h2>' + txt.addAPolygon() + '</h2>')
 }
 
 exports.drawingPoint = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<p>Name this point</p>');
-	menu.append('<input id="name" type="text" placeholder="name" required>');
-	menu.append('<p>Choose icon color</p>');	
+	menu.append('<p>' + txt.name() + '</p>');
+	menu.append('<input id="name" type="text" placeholder="' + txt.name() + '" required>');
+	menu.append('<p>' + txt.iconColor() + '</p>');	
 	menu.append('<select id="color">');
 	var select = $('#color')
-	var colors = featureStyle.colorOptions();
+	var colors = txt.colorOptions();
 	for(i=0;i<colors.length;i++) {
-		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
+		select.append('<option value="' + colors[i].id + '">' + colors[i].name + '</option>')
 	}
 	menu.append('<br><br>');
-	menu.append('<button id="yes">Save</button>');
-	menu.append('<button id="no">Cancel</button>');
+	menu.append('<button id="yes">' + txt.save() + '</button>');
+	menu.append('<button id="no">' + txt.cancel() + '</button>');
 
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
@@ -77,20 +82,20 @@ exports.drawingPoint = function(coord) {
 exports.drawingLine = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<p>Name this line</p>')
-	menu.append('<input id="name" type="text" placeholder="name" required>');
-	menu.append('<p>Choose color</p>');
+	menu.append('<p>' + txt.name() + '</p>')
+	menu.append('<input id="name" type="text" placeholder="' + txt.name() + '" required>');
+	menu.append('<p>' + txt.color() + '</p>');
 	menu.append('<select id="color">');
 	var select = $('#color');
-	var colors = featureStyle.colorOptions();
+	var colors = txt.colorOptions();
 	for(i=0;i<colors.length;i++) {
-		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
+		select.append('<option value="' + colors[i].id + '">' + colors[i].name + '</option>')
 	}
-	menu.append('<p>Choose line opacity</p>');
+	menu.append('<p>' + txt.opacity() + '</p>');
 	menu.append('<input type="range" id="opacity" value="50">');
 	menu.append('<br><br>');
-	menu.append('<button id="yes">Save</button>');
-	menu.append('<button id="no">Cancel</button>');
+	menu.append('<button id="yes">' + txt.save() + '</button>');
+	menu.append('<button id="no">' + txt.cancel() + '</button>');
 
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
@@ -116,25 +121,25 @@ exports.drawingLine = function(coord) {
 exports.drawingPolygon = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<p>Name this polygon</p>')
-	menu.append('<input id="name" type="text" placeholder="name" required>')
-	menu.append('<p>Border color</p>');
+	menu.append('<p>' + txt.name() + '</p>')
+	menu.append('<input id="name" type="text" placeholder="' + txt.name() + '" required>')
+	menu.append('<p>' + txt.borderColor() + '</p>');
 	menu.append('<select id="bordercolor">');
-	menu.append('<p>Border opacity</p>');
+	menu.append('<p>' + txt.borderOpacity() + '</p>');
 	menu.append('<input type="range" id="borderopacity" value="50">');
-	menu.append('<p>Fill color</p>');
+	menu.append('<p>' + txt.fillColor() + '</p>');
 	menu.append('<select id="fillcolor">');
-	menu.append('<p>Fill opacity</p>');
+	menu.append('<p>' + txt.fillOpacity() + '</p>');
 	menu.append('<input type="range" id="fillopacity" value="20">');
 	menu.append('<br><br>');
-	menu.append('<button id="yes">Save</button>');
-	menu.append('<button id="no">Cancel</button>');
+	menu.append('<button id="yes">' + txt.save() + '</button>');
+	menu.append('<button id="no">' + txt.cancel() + '</button>');
 	var selectBorder = $('#bordercolor');
 	var selectFill = $('#fillcolor');
-	var colors = featureStyle.colorOptions();
+	var colors = txt.colorOptions();
 	for(i=0;i<colors.length;i++) {
-		selectBorder.append('<option value="' + colors[i] + '">' + colors[i] + '</option>');
-		selectFill.append('<option value="' + colors[i] + '">' + colors[i] + '</option>');
+		selectBorder.append('<option value="' + colors[i].id + '">' + colors[i].name + '</option>');
+		selectFill.append('<option value="' + colors[i].id + '">' + colors[i].name + '</option>');
 	}
 
 	$('button#no').on('click', function() { map.remove(); init(); })

@@ -20,10 +20,11 @@ app.get('/', function(req, res) {
 	res.render('index')
 })
 
-app.get('/new' , function(req, res) {
+app.get('/new/:lang' , function(req, res) {
 	var id = account.createId();
+	var lang = req.params.lang;
 	jf.writeFileSync('data/' + id + '.json', tmpl.collection());
-	res.redirect('/' + id);
+	res.redirect('/' + lang + id);
 })
 
 app.get('/:id', function(req, res) {
