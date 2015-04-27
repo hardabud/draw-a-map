@@ -4,3 +4,11 @@
 button, input, select {
 	width: 80%;
 }
+
+p {
+	font-size: 0.7em
+}
+
+div#menu {
+	overflow-y: auto
+}

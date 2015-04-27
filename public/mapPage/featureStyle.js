@@ -16,11 +16,11 @@ exports.orangeIcon = new icon({iconUrl: 'img/icons/orange.png'});
 exports.purpleIcon = new icon({iconUrl: 'img/icons/purple.png'});
 exports.grayIcon = new icon({iconUrl: 'img/icons/gray.png'});
 
-exports.options = function() {
+exports.colorOptions = function() {
 	return ['Blue', 'Green', 'Red', 'Orange', 'Purple', 'Gray']
 }
 
-exports.style = function(color) {
+exports.pointStyle = function(color) {
 	if(color == 'Blue') { return { icon: 'blueIcon' } }
 	else if(color == 'Green') { return { icon: 'greenIcon' } }
 	else if(color == 'Red') { return { icon: 'redIcon' } }
@@ -28,5 +28,15 @@ exports.style = function(color) {
 	else if(color == 'Purple') { return { icon: 'purpleIcon' } }
 	else if(color == 'Gray') { return { icon: 'grayIcon' } }
 	else { return { icon: 'blueIcon' } }
+}
+
+exports.toHex = function(color) {
+	if(color == 'Blue') { return '#1f78b4' }
+	else if(color == 'Green') { return '#33a02c' }
+	else if(color == 'Red') { return '#e31a1c' }
+	else if(color == 'Orange') { return '#ff7f00' }
+	else if(color == 'Purple') { return '#6a3d9a' }
+	else if(color == 'Gray') { return '#333333' }
+	else { return '#1f78b4' }
 }
 

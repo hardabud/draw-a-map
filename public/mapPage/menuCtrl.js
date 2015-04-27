@@ -1,7 +1,7 @@
 var $ = require('jquery');
 
 var mapCtrl = require('./mapCtrl.js');
-var icons = require('./icons.js');
+var featureStyle = require('./featureStyle.js');
 
 exports.init = init;
 
@@ -43,18 +43,19 @@ function drawPolygon(menu) {
 exports.drawingPoint = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<h2>Save this point?</h2>');
 	menu.append('<p>Name this point</p>');
 	menu.append('<input id="name" type="text" placeholder="name" required>');
 	menu.append('<p>Choose icon color</p>');	
 	menu.append('<select id="color">');
 	var select = $('#color')
-	var colors = icons.options();
+	var colors = featureStyle.colorOptions();
 	for(i=0;i<colors.length;i++) {
 		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
 	}
-	menu.append('<button id="yes">Yes</button>');
-	menu.append('<button id="no">No</button>');
+	menu.append('<br><br>');
+	menu.append('<button id="yes">Save</button>');
+	menu.append('<button id="no">Cancel</button>');
+
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
 		var date = Date.now();
@@ -67,7 +68,7 @@ exports.drawingPoint = function(coord) {
 			properties: {
 				created: date,
 				name: $('#name').val(),
-				style: icons.style($('#color').val())
+				style: featureStyle.pointStyle($('#color').val())
 			}
 		}, function(resp) { map.remove(); init(); });
 	})
@@ -76,55 +77,85 @@ exports.drawingPoint = function(coord) {
 exports.drawingLine = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<h2>Save this line?</h2>');
-	menu.append('<input id="name" type="text" placeholder="name" required>')
-	menu.append('<button id="yes">Yes</button>');
-	menu.append('<button id="no">No</button>');
+	menu.append('<p>Name this line</p>')
+	menu.append('<input id="name" type="text" placeholder="name" required>');
+	menu.append('<p>Choose color</p>');
+	menu.append('<select id="color">');
+	var select = $('#color');
+	var colors = featureStyle.colorOptions();
+	for(i=0;i<colors.length;i++) {
+		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
+	}
+	menu.append('<p>Choose line opacity</p>');
+	menu.append('<input type="range" id="opacity" value="50">');
+	menu.append('<br><br>');
+	menu.append('<button id="yes">Save</button>');
+	menu.append('<button id="no">Cancel</button>');
+
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
-		if($('#name').val() == '') {
-			menu.append('<p>Give this line a name</p>')
-		} else {
-			var date = Date.now();
-			$.post('/api/add/' + id, {
-				type: 'Feature', 
-				geometry: { 
-					type: 'LineString', 
-					coordinates: coord
-				}, 
-				properties: {
-					created: date,
-					name: $('#name').val()
+		var date = Date.now();
+		$.post('/api/add/' + id, {
+			type: 'Feature', 
+			geometry: { 
+				type: 'LineString', 
+				coordinates: coord,
+			}, 
+			properties: {
+				created: date,
+				name: $('#name').val(),
+				style: {
+						color: featureStyle.toHex($('#color').val()),
+						opacity: $('#opacity').val() / 100
 				}
-			}, function(resp) { map.remove(); init(); });
-		}
+			}
+		}, function(resp) { map.remove(); init(); });
 	})
 }
 
 exports.drawingPolygon = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<h2>Save this polygon?</h2>');
+	menu.append('<p>Name this polygon</p>')
 	menu.append('<input id="name" type="text" placeholder="name" required>')
-	menu.append('<button id="yes">Yes</button>');
-	menu.append('<button id="no">No</button>');
+	menu.append('<p>Border color</p>');
+	menu.append('<select id="bordercolor">');
+	menu.append('<p>Border opacity</p>');
+	menu.append('<input type="range" id="borderopacity" value="50">');
+	menu.append('<p>Fill color</p>');
+	menu.append('<select id="fillcolor">');
+	menu.append('<p>Fill opacity</p>');
+	menu.append('<input type="range" id="fillopacity" value="20">');
+	menu.append('<br><br>');
+	menu.append('<button id="yes">Save</button>');
+	menu.append('<button id="no">Cancel</button>');
+	var selectBorder = $('#bordercolor');
+	var selectFill = $('#fillcolor');
+	var colors = featureStyle.colorOptions();
+	for(i=0;i<colors.length;i++) {
+		selectBorder.append('<option value="' + colors[i] + '">' + colors[i] + '</option>');
+		selectFill.append('<option value="' + colors[i] + '">' + colors[i] + '</option>');
+	}
+
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
-		if($('#name').val() == '') {
-			menu.append('<p>Give this polygon a name</p>')
-		} else {
-			var date = Date.now();
-			$.post('/api/add/' + id, {
-				type: 'Feature', 
-				geometry: { 
-					type: 'Polygon', 
-					coordinates: coord}, 
-				properties: {
-					created: date,
-					name: $('#name').val()
+		var date = Date.now();
+		$.post('/api/add/' + id, {
+			type: 'Feature', 
+			geometry: { 
+				type: 'Polygon', 
+				coordinates: coord}, 
+			properties: {
+				created: date,
+				name: $('#name').val(),
+				style: {
+					color: featureStyle.toHex($('#bordercolor').val()),
+					opacity: $('#borderopacity').val() / 100,
+					fillColor: featureStyle.toHex($('#fillcolor').val()),
+					fillOpacity: $('#fillopacity').val() / 100,						
 				}
-			}, function(resp) { map.remove(); init(); });
-		}
+			}
+		}, function(resp) { map.remove(); init(); });
 	})
 }
 

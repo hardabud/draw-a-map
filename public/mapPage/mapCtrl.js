@@ -1,7 +1,7 @@
 var L = require('leaflet');
 var $ = require('jquery');
 
-var icons = require('./icons.js');
+var featureStyle = require('./featureStyle.js');
 var menuCtrl = require('./menuCtrl.js');
 var renderGeojson = require('./renderGeojson.js');
 
@@ -21,13 +21,23 @@ exports.init = function() {
 		}
 
 		var points = [];
+		var lines = [];
+		var polygons = [];
 		var other = [];
 		for(i=0;i<json.features.length;i++) {
 			if(json.features[i].geometry.type == 'Point') { points.push(json.features[i]) }
+			else if(json.features[i].geometry.type == 'LineString') { lines.push(json.features[i]) }
+			else if(json.features[i].geometry.type == 'Polygon') { polygons.push(json.features[i]) }
 			else { other.push(json.features[i]) }
 		}
 		for(i=0;i<points.length;i++) {
 			renderGeojson.point(points[i]);
+		}
+		for(i=0;i<lines.length;i++) {
+			renderGeojson.line(lines[i]);
+		}
+		for(i=0;i<polygons.length;i++) {
+			renderGeojson.polygon(polygons[i]);
 		}
 		var otherCollection = { type: 'FeatureCollection', features: other }
 		L.geoJson(otherCollection).addTo(map);
@@ -44,7 +54,7 @@ function mapClick(e) {
 }
 
 function drawPoint(e) {
-	L.marker(e.latlng, {icon: icons.blueIcon}).addTo(map)
+	L.marker(e.latlng, {icon: featureStyle.blueIcon}).addTo(map)
 	window.mode = 'idle';
 
 	menuCtrl.drawingPoint([e.latlng.lng, e.latlng.lat]);

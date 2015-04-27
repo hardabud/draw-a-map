@@ -19,7 +19,51 @@ menuCtrl.init();
 
 
 
-},{"./mapPage/grid.js":2,"./mapPage/menuCtrl.js":5,"jquery":7,"leaflet":8}],2:[function(require,module,exports){
+},{"./mapPage/grid.js":3,"./mapPage/menuCtrl.js":5,"jquery":7,"leaflet":8}],2:[function(require,module,exports){
+var icon = L.Icon.extend({
+	options: {
+		shadowUrl: 'img/icons/shadow.png',
+		iconSize:     [30, 41],
+		shadowSize:   [20, 20],
+		iconAnchor:   [15, 41],
+		shadowAnchor: [4, 20],
+		popupAnchor:  [0, -42]
+	}
+});
+
+exports.blueIcon = new icon({iconUrl: 'img/icons/blue.png'});
+exports.greenIcon = new icon({iconUrl: 'img/icons/green.png'});
+exports.redIcon = new icon({iconUrl: 'img/icons/red.png'});
+exports.orangeIcon = new icon({iconUrl: 'img/icons/orange.png'});
+exports.purpleIcon = new icon({iconUrl: 'img/icons/purple.png'});
+exports.grayIcon = new icon({iconUrl: 'img/icons/gray.png'});
+
+exports.colorOptions = function() {
+	return ['Blue', 'Green', 'Red', 'Orange', 'Purple', 'Gray']
+}
+
+exports.pointStyle = function(color) {
+	if(color == 'Blue') { return { icon: 'blueIcon' } }
+	else if(color == 'Green') { return { icon: 'greenIcon' } }
+	else if(color == 'Red') { return { icon: 'redIcon' } }
+	else if(color == 'Orange') { return { icon: 'orangeIcon' } }
+	else if(color == 'Purple') { return { icon: 'purpleIcon' } }
+	else if(color == 'Gray') { return { icon: 'grayIcon' } }
+	else { return { icon: 'blueIcon' } }
+}
+
+exports.toHex = function(color) {
+	if(color == 'Blue') { return '#1f78b4' }
+	else if(color == 'Green') { return '#33a02c' }
+	else if(color == 'Red') { return '#e31a1c' }
+	else if(color == 'Orange') { return '#ff7f00' }
+	else if(color == 'Purple') { return '#6a3d9a' }
+	else if(color == 'Gray') { return '#333333' }
+	else { return '#1f78b4' }
+}
+
+
+},{}],3:[function(require,module,exports){
 var $ = require('jquery');
 
 module.exports = function(body) { 
@@ -53,45 +97,11 @@ module.exports = function(body) {
 }
 
 
-},{"jquery":7}],3:[function(require,module,exports){
-var icon = L.Icon.extend({
-	options: {
-		shadowUrl: 'img/icons/shadow.png',
-		iconSize:     [30, 41],
-		shadowSize:   [20, 20],
-		iconAnchor:   [15, 41],
-		shadowAnchor: [4, 20],
-		popupAnchor:  [0, -42]
-	}
-});
-
-exports.blueIcon = new icon({iconUrl: 'img/icons/blue.png'});
-exports.greenIcon = new icon({iconUrl: 'img/icons/green.png'});
-exports.redIcon = new icon({iconUrl: 'img/icons/red.png'});
-exports.orangeIcon = new icon({iconUrl: 'img/icons/orange.png'});
-exports.purpleIcon = new icon({iconUrl: 'img/icons/purple.png'});
-exports.grayIcon = new icon({iconUrl: 'img/icons/gray.png'});
-
-exports.options = function() {
-	return ['Blue', 'Green', 'Red', 'Orange', 'Purple', 'Gray']
-}
-
-exports.style = function(color) {
-	if(color == 'Blue') { return { icon: 'blueIcon' } }
-	else if(color == 'Green') { return { icon: 'greenIcon' } }
-	else if(color == 'Red') { return { icon: 'redIcon' } }
-	else if(color == 'Orange') { return { icon: 'orangeIcon' } }
-	else if(color == 'Purple') { return { icon: 'purpleIcon' } }
-	else if(color == 'Gray') { return { icon: 'grayIcon' } }
-	else { return { icon: 'blueIcon' } }
-}
-
-
-},{}],4:[function(require,module,exports){
+},{"jquery":7}],4:[function(require,module,exports){
 var L = require('leaflet');
 var $ = require('jquery');
 
-var icons = require('./icons.js');
+var featureStyle = require('./featureStyle.js');
 var menuCtrl = require('./menuCtrl.js');
 var renderGeojson = require('./renderGeojson.js');
 
@@ -111,13 +121,23 @@ exports.init = function() {
 		}
 
 		var points = [];
+		var lines = [];
+		var polygons = [];
 		var other = [];
 		for(i=0;i<json.features.length;i++) {
 			if(json.features[i].geometry.type == 'Point') { points.push(json.features[i]) }
+			else if(json.features[i].geometry.type == 'LineString') { lines.push(json.features[i]) }
+			else if(json.features[i].geometry.type == 'Polygon') { polygons.push(json.features[i]) }
 			else { other.push(json.features[i]) }
 		}
 		for(i=0;i<points.length;i++) {
 			renderGeojson.point(points[i]);
+		}
+		for(i=0;i<lines.length;i++) {
+			renderGeojson.line(lines[i]);
+		}
+		for(i=0;i<polygons.length;i++) {
+			renderGeojson.polygon(polygons[i]);
 		}
 		var otherCollection = { type: 'FeatureCollection', features: other }
 		L.geoJson(otherCollection).addTo(map);
@@ -134,7 +154,7 @@ function mapClick(e) {
 }
 
 function drawPoint(e) {
-	L.marker(e.latlng, {icon: icons.blueIcon}).addTo(map)
+	L.marker(e.latlng, {icon: featureStyle.blueIcon}).addTo(map)
 	window.mode = 'idle';
 
 	menuCtrl.drawingPoint([e.latlng.lng, e.latlng.lat]);
@@ -177,11 +197,11 @@ function drawPolygon(e) {
 }
 
 
-},{"./icons.js":3,"./menuCtrl.js":5,"./renderGeojson.js":6,"jquery":7,"leaflet":8}],5:[function(require,module,exports){
+},{"./featureStyle.js":2,"./menuCtrl.js":5,"./renderGeojson.js":6,"jquery":7,"leaflet":8}],5:[function(require,module,exports){
 var $ = require('jquery');
 
 var mapCtrl = require('./mapCtrl.js');
-var icons = require('./icons.js');
+var featureStyle = require('./featureStyle.js');
 
 exports.init = init;
 
@@ -223,18 +243,19 @@ function drawPolygon(menu) {
 exports.drawingPoint = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<h2>Save this point?</h2>');
 	menu.append('<p>Name this point</p>');
 	menu.append('<input id="name" type="text" placeholder="name" required>');
 	menu.append('<p>Choose icon color</p>');	
 	menu.append('<select id="color">');
 	var select = $('#color')
-	var colors = icons.options();
+	var colors = featureStyle.colorOptions();
 	for(i=0;i<colors.length;i++) {
 		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
 	}
-	menu.append('<button id="yes">Yes</button>');
-	menu.append('<button id="no">No</button>');
+	menu.append('<br><br>');
+	menu.append('<button id="yes">Save</button>');
+	menu.append('<button id="no">Cancel</button>');
+
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
 		var date = Date.now();
@@ -247,7 +268,7 @@ exports.drawingPoint = function(coord) {
 			properties: {
 				created: date,
 				name: $('#name').val(),
-				style: icons.style($('#color').val())
+				style: featureStyle.pointStyle($('#color').val())
 			}
 		}, function(resp) { map.remove(); init(); });
 	})
@@ -256,80 +277,166 @@ exports.drawingPoint = function(coord) {
 exports.drawingLine = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<h2>Save this line?</h2>');
-	menu.append('<input id="name" type="text" placeholder="name" required>')
-	menu.append('<button id="yes">Yes</button>');
-	menu.append('<button id="no">No</button>');
+	menu.append('<p>Name this line</p>')
+	menu.append('<input id="name" type="text" placeholder="name" required>');
+	menu.append('<p>Choose color</p>');
+	menu.append('<select id="color">');
+	var select = $('#color');
+	var colors = featureStyle.colorOptions();
+	for(i=0;i<colors.length;i++) {
+		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
+	}
+	menu.append('<p>Choose line opacity</p>');
+	menu.append('<input type="range" id="opacity" value="50">');
+	menu.append('<br><br>');
+	menu.append('<button id="yes">Save</button>');
+	menu.append('<button id="no">Cancel</button>');
+
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
-		if($('#name').val() == '') {
-			menu.append('<p>Give this line a name</p>')
-		} else {
-			var date = Date.now();
-			$.post('/api/add/' + id, {
-				type: 'Feature', 
-				geometry: { 
-					type: 'LineString', 
-					coordinates: coord
-				}, 
-				properties: {
-					created: date,
-					name: $('#name').val()
+		var date = Date.now();
+		$.post('/api/add/' + id, {
+			type: 'Feature', 
+			geometry: { 
+				type: 'LineString', 
+				coordinates: coord,
+			}, 
+			properties: {
+				created: date,
+				name: $('#name').val(),
+				style: {
+						color: featureStyle.toHex($('#color').val()),
+						opacity: $('#opacity').val() / 100
 				}
-			}, function(resp) { map.remove(); init(); });
-		}
+			}
+		}, function(resp) { map.remove(); init(); });
 	})
 }
 
 exports.drawingPolygon = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
-	menu.append('<h2>Save this polygon?</h2>');
+	menu.append('<p>Name this polygon</p>')
 	menu.append('<input id="name" type="text" placeholder="name" required>')
-	menu.append('<button id="yes">Yes</button>');
-	menu.append('<button id="no">No</button>');
+	menu.append('<p>Border color</p>');
+	menu.append('<select id="bordercolor">');
+	menu.append('<p>Border opacity</p>');
+	menu.append('<input type="range" id="borderopacity" value="50">');
+	menu.append('<p>Fill color</p>');
+	menu.append('<select id="fillcolor">');
+	menu.append('<p>Fill opacity</p>');
+	menu.append('<input type="range" id="fillopacity" value="20">');
+	menu.append('<br><br>');
+	menu.append('<button id="yes">Save</button>');
+	menu.append('<button id="no">Cancel</button>');
+	var selectBorder = $('#bordercolor');
+	var selectFill = $('#fillcolor');
+	var colors = featureStyle.colorOptions();
+	for(i=0;i<colors.length;i++) {
+		selectBorder.append('<option value="' + colors[i] + '">' + colors[i] + '</option>');
+		selectFill.append('<option value="' + colors[i] + '">' + colors[i] + '</option>');
+	}
+
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
-		if($('#name').val() == '') {
-			menu.append('<p>Give this polygon a name</p>')
-		} else {
-			var date = Date.now();
-			$.post('/api/add/' + id, {
-				type: 'Feature', 
-				geometry: { 
-					type: 'Polygon', 
-					coordinates: coord}, 
-				properties: {
-					created: date,
-					name: $('#name').val()
+		var date = Date.now();
+		$.post('/api/add/' + id, {
+			type: 'Feature', 
+			geometry: { 
+				type: 'Polygon', 
+				coordinates: coord}, 
+			properties: {
+				created: date,
+				name: $('#name').val(),
+				style: {
+					color: featureStyle.toHex($('#bordercolor').val()),
+					opacity: $('#borderopacity').val() / 100,
+					fillColor: featureStyle.toHex($('#fillcolor').val()),
+					fillOpacity: $('#fillopacity').val() / 100,						
 				}
-			}, function(resp) { map.remove(); init(); });
-		}
+			}
+		}, function(resp) { map.remove(); init(); });
 	})
 }
 
 
-},{"./icons.js":3,"./mapCtrl.js":4,"jquery":7}],6:[function(require,module,exports){
-var icons = require('./icons.js');
+},{"./featureStyle.js":2,"./mapCtrl.js":4,"jquery":7}],6:[function(require,module,exports){
+var featureStyle = require('./featureStyle.js');
 
 exports.point = function(feature) {
 	var coord = [+feature.geometry.coordinates[1], +feature.geometry.coordinates[0]];
 	if(feature.properties.style == undefined) {
-		L.marker(coord, {icon: icons.blueIcon}).addTo(map);
+		L.marker(coord, {icon: featureStyle.blueIcon}).addTo(map);
 	} else if(feature.properties.style.icon == undefined) {
-		L.marker(coord, {icon: icons.blueIcon}).addTo(map);
+		L.marker(coord, {icon: featureStyle.blueIcon}).addTo(map);
 	} else {
 		var icon = feature.properties.style.icon;
-		if(icon == 'blueIcon') { L.marker(coord, {icon: icons.blueIcon}).addTo(map); }
-		if(icon == 'greenIcon') { L.marker(coord, {icon: icons.greenIcon}).addTo(map); }
-		if(icon == 'redIcon') { L.marker(coord, {icon: icons.redIcon}).addTo(map); }
-		if(icon == 'orangeIcon') { L.marker(coord, {icon: icons.orangeIcon}).addTo(map); }
-		if(icon == 'purpleIcon') { L.marker(coord, {icon: icons.purpleIcon}).addTo(map); }
-		if(icon == 'grayIcon') { L.marker(coord, {icon: icons.grayIcon}).addTo(map); }
+		if(icon == 'blueIcon') { L.marker(coord, {icon: featureStyle.blueIcon}).addTo(map); }
+		if(icon == 'greenIcon') { L.marker(coord, {icon: featureStyle.greenIcon}).addTo(map); }
+		if(icon == 'redIcon') { L.marker(coord, {icon: featureStyle.redIcon}).addTo(map); }
+		if(icon == 'orangeIcon') { L.marker(coord, {icon: featureStyle.orangeIcon}).addTo(map); }
+		if(icon == 'purpleIcon') { L.marker(coord, {icon: featureStyle.purpleIcon}).addTo(map); }
+		if(icon == 'grayIcon') { L.marker(coord, {icon: featureStyle.grayIcon}).addTo(map); }
 	}
 }
 
-},{"./icons.js":3}],7:[function(require,module,exports){
+exports.line = function(feature) {
+	if(feature.properties.style == undefined) {
+		L.geoJson(feature, {
+			style: { 
+				color: '#1f78b4',
+				weight: 5,
+				opacity: 0.5
+			}
+		}).addTo(map)
+	} else {
+		if(feature.properties.style.color != undefined) { var color = feature.properties.style.color }
+		else { var color = '#1f78b4'; }
+		if(feature.properties.style.opacity != undefined) { var opacity = +feature.properties.style.opacity }
+		else { var opacity = 0.5 }
+		L.geoJson(feature, {
+			style: { 
+				color: color,
+				weight: 5,
+				opacity: opacity
+			}
+		}).addTo(map)
+	}
+}
+
+exports.polygon = function(feature) {
+	if(feature.properties.style == undefined) {
+		L.geoJson(feature, {
+			style: { 
+				color: '#1f78b4',
+				weight: 5,
+				opacity: 0.5,
+				fillColor: '#1f78b4',
+				fillOpacity: 0.2
+			}
+		}).addTo(map)
+	} else {
+		if(feature.properties.style.color != undefined) { var color = feature.properties.style.color }
+		else { var color = '#1f78b4'; }
+		if(feature.properties.style.opacity != undefined) { var opacity = +feature.properties.style.opacity }
+		else { var opacity = 0.5 }
+		if(feature.properties.style.fillColor != undefined) { var fillColor = feature.properties.style.fillColor }
+		else { var color = '#1f78b4'; }
+		if(feature.properties.style.fillOpacity != undefined) { var fillOpacity = +feature.properties.style.fillOpacity }
+		else { var opacity = 0.2 }
+		L.geoJson(feature, {
+			style: { 
+				color: color,
+				weight: 5,
+				opacity: opacity,
+				fillColor: fillColor,
+				fillOpacity: fillOpacity
+			}
+		}).addTo(map)
+	}
+}
+
+},{"./featureStyle.js":2}],7:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.3
  * http://jquery.com/
