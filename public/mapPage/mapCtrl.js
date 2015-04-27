@@ -91,7 +91,6 @@ function drawPolygon(e) {
 		for(i=0;i<pts.length;i++) {
 			coord[0].push([pts[i][1], pts[i][0]])
 		}
-		console.log(coord)
 		menuCtrl.drawingPolygon(coord);
 	}
 }
