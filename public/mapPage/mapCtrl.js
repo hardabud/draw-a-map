@@ -1,8 +1,9 @@
 var L = require('leaflet');
 var $ = require('jquery');
 
-
+var icons = require('./icons.js');
 var menuCtrl = require('./menuCtrl.js');
+var renderGeojson = require('./renderGeojson.js');
 
 exports.init = function() {
 	window.map = L.map('map');
@@ -10,13 +11,27 @@ exports.init = function() {
 	window.mode = 'idle';
 
 	$.getJSON('/api/get/' + id, function(json) {
-		var geojson = L.geoJson(json).addTo(map);
+
+		var geojson = L.geoJson(json);
 		if(json.features.length == 0) { map.setView([0, 0], 10); }
 		else if(json.features.length == 1 && json.features[0].geometry.type == 'Point') { 
 			map.setView(geojson.getBounds()._southWest, 10) 
 		} else { 
 			map.fitBounds(geojson.getBounds()) 
 		}
+
+		var points = [];
+		var other = [];
+		for(i=0;i<json.features.length;i++) {
+			if(json.features[i].geometry.type == 'Point') { points.push(json.features[i]) }
+			else { other.push(json.features[i]) }
+		}
+		for(i=0;i<points.length;i++) {
+			renderGeojson.point(points[i]);
+		}
+		var otherCollection = { type: 'FeatureCollection', features: other }
+		L.geoJson(otherCollection).addTo(map);
+
 	});
 
 	map.on('click', function(e) { mapClick(e) })
@@ -29,7 +44,7 @@ function mapClick(e) {
 }
 
 function drawPoint(e) {
-	L.marker(e.latlng).addTo(map)
+	L.marker(e.latlng, {icon: icons.blueIcon}).addTo(map)
 	window.mode = 'idle';
 
 	menuCtrl.drawingPoint([e.latlng.lng, e.latlng.lat]);

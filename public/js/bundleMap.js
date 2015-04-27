@@ -19,7 +19,7 @@ menuCtrl.init();
 
 
 
-},{"./mapPage/grid.js":2,"./mapPage/menuCtrl.js":4,"jquery":5,"leaflet":6}],2:[function(require,module,exports){
+},{"./mapPage/grid.js":2,"./mapPage/menuCtrl.js":5,"jquery":7,"leaflet":8}],2:[function(require,module,exports){
 var $ = require('jquery');
 
 module.exports = function(body) { 
@@ -53,12 +53,47 @@ module.exports = function(body) {
 }
 
 
-},{"jquery":5}],3:[function(require,module,exports){
+},{"jquery":7}],3:[function(require,module,exports){
+var icon = L.Icon.extend({
+	options: {
+		shadowUrl: 'img/icons/shadow.png',
+		iconSize:     [30, 41],
+		shadowSize:   [20, 20],
+		iconAnchor:   [15, 41],
+		shadowAnchor: [4, 20],
+		popupAnchor:  [0, -42]
+	}
+});
+
+exports.blueIcon = new icon({iconUrl: 'img/icons/blue.png'});
+exports.greenIcon = new icon({iconUrl: 'img/icons/green.png'});
+exports.redIcon = new icon({iconUrl: 'img/icons/red.png'});
+exports.orangeIcon = new icon({iconUrl: 'img/icons/orange.png'});
+exports.purpleIcon = new icon({iconUrl: 'img/icons/purple.png'});
+exports.grayIcon = new icon({iconUrl: 'img/icons/gray.png'});
+
+exports.options = function() {
+	return ['Blue', 'Green', 'Red', 'Orange', 'Purple', 'Gray']
+}
+
+exports.style = function(color) {
+	if(color == 'Blue') { return { icon: 'blueIcon' } }
+	else if(color == 'Green') { return { icon: 'greenIcon' } }
+	else if(color == 'Red') { return { icon: 'redIcon' } }
+	else if(color == 'Orange') { return { icon: 'orangeIcon' } }
+	else if(color == 'Purple') { return { icon: 'purpleIcon' } }
+	else if(color == 'Gray') { return { icon: 'grayIcon' } }
+	else { return { icon: 'blueIcon' } }
+}
+
+
+},{}],4:[function(require,module,exports){
 var L = require('leaflet');
 var $ = require('jquery');
 
-
+var icons = require('./icons.js');
 var menuCtrl = require('./menuCtrl.js');
+var renderGeojson = require('./renderGeojson.js');
 
 exports.init = function() {
 	window.map = L.map('map');
@@ -66,13 +101,27 @@ exports.init = function() {
 	window.mode = 'idle';
 
 	$.getJSON('/api/get/' + id, function(json) {
-		var geojson = L.geoJson(json).addTo(map);
+
+		var geojson = L.geoJson(json);
 		if(json.features.length == 0) { map.setView([0, 0], 10); }
 		else if(json.features.length == 1 && json.features[0].geometry.type == 'Point') { 
 			map.setView(geojson.getBounds()._southWest, 10) 
 		} else { 
 			map.fitBounds(geojson.getBounds()) 
 		}
+
+		var points = [];
+		var other = [];
+		for(i=0;i<json.features.length;i++) {
+			if(json.features[i].geometry.type == 'Point') { points.push(json.features[i]) }
+			else { other.push(json.features[i]) }
+		}
+		for(i=0;i<points.length;i++) {
+			renderGeojson.point(points[i]);
+		}
+		var otherCollection = { type: 'FeatureCollection', features: other }
+		L.geoJson(otherCollection).addTo(map);
+
 	});
 
 	map.on('click', function(e) { mapClick(e) })
@@ -85,7 +134,7 @@ function mapClick(e) {
 }
 
 function drawPoint(e) {
-	L.marker(e.latlng).addTo(map)
+	L.marker(e.latlng, {icon: icons.blueIcon}).addTo(map)
 	window.mode = 'idle';
 
 	menuCtrl.drawingPoint([e.latlng.lng, e.latlng.lat]);
@@ -128,9 +177,11 @@ function drawPolygon(e) {
 }
 
 
-},{"./menuCtrl.js":4,"jquery":5,"leaflet":6}],4:[function(require,module,exports){
+},{"./icons.js":3,"./menuCtrl.js":5,"./renderGeojson.js":6,"jquery":7,"leaflet":8}],5:[function(require,module,exports){
 var $ = require('jquery');
+
 var mapCtrl = require('./mapCtrl.js');
+var icons = require('./icons.js');
 
 exports.init = init;
 
@@ -173,27 +224,32 @@ exports.drawingPoint = function(coord) {
 	var menu = $('#menu');
 	menu.empty();
 	menu.append('<h2>Save this point?</h2>');
-	menu.append('<input id="name" type="text" placeholder="name" required>')
+	menu.append('<p>Name this point</p>');
+	menu.append('<input id="name" type="text" placeholder="name" required>');
+	menu.append('<p>Choose icon color</p>');	
+	menu.append('<select id="color">');
+	var select = $('#color')
+	var colors = icons.options();
+	for(i=0;i<colors.length;i++) {
+		select.append('<option value="' + colors[i] + '">' + colors[i] + '</option>')
+	}
 	menu.append('<button id="yes">Yes</button>');
 	menu.append('<button id="no">No</button>');
 	$('button#no').on('click', function() { map.remove(); init(); })
 	$('button#yes').on('click', function() {
-		if($('#name').val() == '') {
-			menu.append('<p>Give this point a name</p>')
-		} else {
-			var date = Date.now();
-			$.post('/api/add/' + id, {
-				type: 'Feature', 
-				geometry: { 
-					type: 'Point', 
-					coordinates: coord
-				}, 
-				properties: {
-					created: date,
-					name: $('#name').val()
-				}
-			}, function(resp) { map.remove(); init(); });
-		}
+		var date = Date.now();
+		$.post('/api/add/' + id, {
+			type: 'Feature', 
+			geometry: { 
+				type: 'Point', 
+				coordinates: coord
+			}, 
+			properties: {
+				created: date,
+				name: $('#name').val(),
+				style: icons.style($('#color').val())
+			}
+		}, function(resp) { map.remove(); init(); });
 	})
 }
 
@@ -253,7 +309,27 @@ exports.drawingPolygon = function(coord) {
 }
 
 
-},{"./mapCtrl.js":3,"jquery":5}],5:[function(require,module,exports){
+},{"./icons.js":3,"./mapCtrl.js":4,"jquery":7}],6:[function(require,module,exports){
+var icons = require('./icons.js');
+
+exports.point = function(feature) {
+	var coord = [+feature.geometry.coordinates[1], +feature.geometry.coordinates[0]];
+	if(feature.properties.style == undefined) {
+		L.marker(coord, {icon: icons.blueIcon}).addTo(map);
+	} else if(feature.properties.style.icon == undefined) {
+		L.marker(coord, {icon: icons.blueIcon}).addTo(map);
+	} else {
+		var icon = feature.properties.style.icon;
+		if(icon == 'blueIcon') { L.marker(coord, {icon: icons.blueIcon}).addTo(map); }
+		if(icon == 'greenIcon') { L.marker(coord, {icon: icons.greenIcon}).addTo(map); }
+		if(icon == 'redIcon') { L.marker(coord, {icon: icons.redIcon}).addTo(map); }
+		if(icon == 'orangeIcon') { L.marker(coord, {icon: icons.orangeIcon}).addTo(map); }
+		if(icon == 'purpleIcon') { L.marker(coord, {icon: icons.purpleIcon}).addTo(map); }
+		if(icon == 'grayIcon') { L.marker(coord, {icon: icons.grayIcon}).addTo(map); }
+	}
+}
+
+},{"./icons.js":3}],7:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.1.3
  * http://jquery.com/
@@ -9460,7 +9536,7 @@ return jQuery;
 
 }));
 
-},{}],6:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 /*
  Leaflet, a JavaScript library for mobile-friendly interactive maps. http://leafletjs.com
  (c) 2010-2013, Vladimir Agafonkin
